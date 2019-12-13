@@ -4,6 +4,61 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from pprint import pprint
 
+# Game Variables
+UNKNOWN, IN_HAND = 'unk', 'inh' 
+# PLAYED_BY_0, PLAYED_BY_1, PLAYED_BY_2, PLAYED_BY_3  = 'by0', 'by1', 'by2', 'by3'
+# TABLE_BY_1, TABLE_BY_2, TABLE_BY_3 = 'tb1', 'tb2', 'tb3'
+# ALL_STATES = [PLAYED_BY_0, PLAYED_BY_1, PLAYED_BY_2, PLAYED_BY_3, TABLE_BY_1, TABLE_BY_2, TABLE_BY_3, IN_HAND]
+
+# Smaller dimensions
+PLAYED_BY_0, PLAYED_BY_1, PLAYED_BY_2, PLAYED_BY_3  = 'used', 'used', 'used', 'used'
+TABLE_BY_1, TABLE_BY_2, TABLE_BY_3 = 'tb1', 'tb2', 'tb3'
+ALL_STATES = [PLAYED_BY_0, TABLE_BY_1, TABLE_BY_2, TABLE_BY_3, IN_HAND]
+
+# General Variables
+HOKM = 'hokm'
+STATE, ACTION, REWARD = 'S', 'A', 'R'
+CARD_TYPES = ['C', 'S', 'H', 'D'] # Khaj: Club, Pik: Spades, Del: Hearts, Khesht: Diamonds
+
+# Game settings
+N_CARDS = 52
+N_FOR_HOKM = 5
+SCORE_TO_WIN = int(N_CARDS/8)+1
+
+
+# Creating the deck
+META_STATES = {'hokm':None}
+ALL_CARDS = []
+for c_type in CARD_TYPES:
+    for i in range(int(N_CARDS/4)):
+        ALL_CARDS.append(c_type + str(i+2))
+        META_STATES[c_type + str(i+2)] = UNKNOWN
+
+
+def card_type(card): 
+    # for finding type of a card
+    return list(card)[0]
+
+
+def value_of(card):
+    return int(card[1:])
+
+def possible_actions(hand, table, hokm):
+    # finding possible actions
+    if len(table) == 0:
+        return hand
+    else:
+        # find the ground card
+        ground_card = card_type(table[0])
+        
+        # See whether we have the card or not    
+        possible_cards = [card for card in hand if card_type(card) == ground_card]
+        if len(possible_cards) == 0:
+            return hand
+        else:
+            return possible_cards
+
+
 class Bucket:
     def __init__(self, name = 'Playing'):
         self.name = name

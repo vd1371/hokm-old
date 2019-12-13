@@ -1,34 +1,9 @@
 import numpy as np
 from my_utils import *
+from players import Player
 
-# Game Variables
-UNKNOWN, IN_HAND = 'unk', 'inh' 
-PLAYED_BY_0, PLAYED_BY_1, PLAYED_BY_2, PLAYED_BY_3  = 'by0', 'by1', 'by2', 'by3'
-TABLE_BY_1, TABLE_BY_2, TABLE_BY_3 = 'tb1', 'tb2', 'tb3'
-ALL_STATES = [PLAYED_BY_0, PLAYED_BY_1, PLAYED_BY_2, PLAYED_BY_3, TABLE_BY_1, TABLE_BY_2, TABLE_BY_3, IN_HAND]
 
-# Smaller dimensions
-# PLAYED_BY_0, PLAYED_BY_1, PLAYED_BY_2, PLAYED_BY_3  = 'used', 'used', 'used', 'used'
-# TABLE_BY_1, TABLE_BY_2, TABLE_BY_3 = 'tb1', 'tb2', 'tb3'
-# ALL_STATES = [PLAYED_BY_0, TABLE_BY_1, TABLE_BY_2, TABLE_BY_3, IN_HAND]
 
-# General Variables
-HOKM = 'hokm'
-STATE, ACTION, REWARD = 'S', 'A', 'R'
-CARD_TYPES = ['C', 'S', 'H', 'D'] # Khaj: Club, Pik: Spades, Del: Hearts, Khesht: Diamonds
-
-# Game settings
-N_CARDS = 52
-N_FOR_HOKM = 5
-SCORE_TO_WIN = int(N_CARDS/8)+1
-
-# Creating the deck
-META_STATES = {'hokm':None}
-ALL_CARDS = []
-for c_type in CARD_TYPES:
-    for i in range(int(N_CARDS/4)):
-        ALL_CARDS.append(c_type + str(i+2))
-        META_STATES[c_type + str(i+2)] = UNKNOWN
 
 # Let's create a logger
 # logger = Logger(logger_name = 'Logger', address = 'Report.log', mode='w')
@@ -53,28 +28,7 @@ def game_status(players, table = []):
         message += str(p.get_knowledge()) + "\n"
     message += "#####################################################################################\n"
     return message
-    
-def card_type(card): 
-    # for finding type of a card
-    return list(card)[0]
 
-def value_of(card):
-    return int(card[1:])
-
-def possible_actions(hand, table, hokm):
-    # finding possible actions
-    if len(table) == 0:
-        return hand
-    else:
-        # find the ground card
-        ground_card = card_type(table[0])
-        
-        # See whether we have the card or not    
-        possible_cards = [card for card in hand if card_type(card) == ground_card]
-        if len(possible_cards) == 0:
-            return hand
-        else:
-            return possible_cards
 
 class HokmTable:
     def __init__(self, p0, p1, p2, p3):
@@ -253,114 +207,7 @@ class HokmTable:
         return self.players[0].score== SCORE_TO_WIN or self.players[1].score == SCORE_TO_WIN
         return False if len(self.players[0].hand) > 0 else True
         
-class Player:
-    def __init__(self, name, fast_learner = True, eps = 0.5, p_ft = None, h_ft=None):
-        self.name = name
-        self.hand = []
-        self.knowledge = META_STATES.copy()
-        self.memory = {} # round: {state: state, action:, reward: r}
-        self.score = 0
-        self.fast_learner = fast_learner
-        self.eps = eps
-        self.p_ft = p_ft
-        self.h_ft = h_ft
-        
-    def update_model(self, pmodel, hmodel):
-        self.pmodel = pmodel
-        self.hmodel = hmodel
-    
-    def add_score(self):
-        self.score += 1
-    
-    def update_knowledge(self, new_set, new_states):
-        for card, state in zip(new_set, new_states):
-            self.knowledge[card] = state
-    
-    def get_memory(self):
-        mem = "\n"
-        for round in self.memory.keys():
-            mem += f'Round {round}\n'
-            state = self.memory[round][STATE]
-            mem += f'State:     Hokm:{state[HOKM]}\n'
-            for card_type in CARD_TYPES:
-                for key, val in state.items():
-                    if card_type in key:
-                        mem += f'{key}:{val}, '
-                mem += '\n'
-            mem += f'Action {self.memory[round][ACTION]}. Reward {self.memory[round][REWARD]}\n\n'
-        return mem                     
-    
-    def get_knowledge(self):
-#         hokm = self.knowledge[HOKM]
-        knowledge = f'Hokm: {self.knowledge[HOKM]}\n'
-        for card_type in CARD_TYPES:
-            for key, val in self.knowledge.items():
-                if card_type in key:
-                    knowledge += f'{key}:{val}, '
-            knowledge += '\n'
-        return knowledge
-    
-    def get_hand(self):
-        return f'Hand length: {len(self.hand)} Hand: {self.hand}'
-    
-    def add_cards_to_hand(self, new_hand):
-        self.hand += new_hand
-        self.update_knowledge(new_hand, [IN_HAND for _ in range(len(new_hand))])
-    
-    def reset(self):
-        self.hand = []
-        self.memory = {}
-        self.knowledge = META_STATES.copy()
-        self.score = 0
-    
-    def remember(self, s_a_r, round):
-        self.memory[round] = s_a_r
-        
-    def select_hokm(self, t0, t1):
-        tmp_dict = {}
-        possible_hokms = list(set([card_type(card) for card in self.hand]))
-        for ct in CARD_TYPES:
-            tmp_dict[ct] = [0, 0]
-            
-        for card in self.hand:
-            tmp_dict[card_type(card)][0] += 1
-            tmp_dict[card_type(card)][1] += value_of(card)
-        
-        max_v = 0
-        hokm = 'U'
-        for c_type in CARD_TYPES:
-            if tmp_dict[c_type][0] * tmp_dict[c_type][1] > max_v:
-                hokm = c_type
-                max_v = tmp_dict[c_type][0] * tmp_dict[c_type][1]
-        if self.fast_learner:
-            return hokm
-        else:
-            return np.random.choice(possible_hokms)
-        
-        
-        t = t0 if self.fast_learner else t1
-        possible_hokms = list(set([card_type(card) for card in self.hand]))
-        if np.random.random() > self.eps/t:
-            q_values = [self.hmodel.predict(self.h_ft.transform(self.hand, c)) for c in possible_hokms]
-            return possible_hokms[np.argmax(q_values)]
-        else:
-            return np.random.choice(possible_hokms) # this is only random playing
-                
-    def play_card(self, table, t0, t1):
-        t = t0 if self.fast_learner else t1
-        possible_a = possible_actions(self.hand, table, self.knowledge[HOKM])
-        
-        if np.random.random() > self.eps/t:
-            q_values = [self.pmodel.predict(self.p_ft.transform(self.knowledge, c)) for c in possible_a]
-            selected_card = possible_a[np.argmax(q_values)]
-        else:
-            selected_card = np.random.choice(possible_a) # this is only random playing
-        
-#         print (self.knowledge[HOKM], 'Table:',table, self.hand, selected_card)
-#         print (possible_a, [self.pmodel.predict(self.p_ft.transform(self.knowledge, c)) for c in possible_a])
-#         input()
-        self.hand.remove(selected_card) # remove selected card from hand
-        return selected_card
+
         
 if __name__ == "__main__":
     eps = 0.5

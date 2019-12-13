@@ -6,7 +6,7 @@ import numpy as np
 
 from hokm_world import *
 from Transformers import PlayingFeatureTransformer, HokmingFeatureTransformer
-from Models import LearningModel
+from models import LearningModel
 
 
 def play_one_episode(table=None, p_ft=None, h_ft=None, gamma=None, t0=1, t1=1, episode=0, hakem=0):
@@ -195,4 +195,4 @@ def learn_now(should_warm_up = True):
     
 if __name__ == "__main__":
     # Run me
-    learn_now(should_warm_up=True)
+    learn_now(should_warm_up=False)

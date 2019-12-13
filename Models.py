@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from sklearn.linear_model import SGDRegressor
 import pickle
-from hokm_world import ALL_CARDS, ALL_STATES, CARD_TYPES, HOKM, N_CARDS
+from my_utils import *
 
 LOSS_FUNC = 'MSE'
 OPTIMIZER = 'adam'
@@ -105,24 +105,24 @@ class LearningModel:
     def save(self):
         f_name = f"./{self._for}-{self._type}"
         if self._type == 'DNN':
-            self.model.save(f_name + ".h5")
+            self.model.save(f"./saved_models/{f_name}.h5")
         elif self._type == 'SGD':
             df = pd.DataFrame(self.model, columns = ['Coeffs'])
-            df.to_csv(f_name + ".csv")
+            df.to_csv(f"./saved_models/{f_name}.csv")
         elif self._type == 'SKLearn':
-            with open(f_name + ".pkl", 'wb') as file:
+            with open(f"./saved_models/{f_name}.pkl", 'wb') as file:
                 pickle.dump(self.model, file)
         return self._n_trained
     
     def load_model(self):
         f_name = f"./{self._for}-{self._type}"
         if self._type == 'DNN':
-            self.model = load_model(f_name+ ".h5")
+            self.model = load_model(f"./saved_models/{f_name}.h5")
             self.model.compile(loss=LOSS_FUNC, optimizer=OPTIMIZER)
         elif self._type == 'SGD':
-            self.model = np.array(pd.read_csv(f_name+ ".csv", index_col = 0)).reshape(1, -1)[0]
+            self.model = np.array(pd.read_csv(f"./saved_models/{f_name}.csv", index_col = 0)).reshape(1, -1)[0]
         elif self._type == 'SKLearn':
-            with open(f_name + ".pkl", 'rb') as file:
+            with open(f"./saved_models/{f_name}.pkl", 'rb') as file:
                 pickle.load(file)
         return self._n_trained
         

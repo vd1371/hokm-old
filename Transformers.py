@@ -1,5 +1,5 @@
 import numpy as np
-from hokm_world import ALL_CARDS, ALL_STATES, CARD_TYPES, HOKM, UNKNOWN
+from my_utils import *
 
 class PlayingFeatureTransformer:
     def __init__(self):
