@@ -80,8 +80,8 @@ def learn_now(should_warm_up = True):
         
     # Hyperparameters
     GAMMA = 0.95
-    N = 10000000
-    eps_decay0 = 0.001
+    N = 1000000
+    eps_decay0 = 0.01
     eps_decay1 = 0
     lr_decay = 0.99
     batch_size = 16
@@ -100,12 +100,12 @@ def learn_now(should_warm_up = True):
     p3 = Player('Taghi', fast_learner = False, eps = eps, p_ft = p_ft, h_ft = h_ft)
     
     # Models
-    pmodel = LearningModel(_for = 'Playing', _type = 'SGD', warm_up = should_warm_up, n_trained = n_pmodel_trained)
-    hmodel = LearningModel(_for = 'Hokming', _type = 'SGD', warm_up = should_warm_up, n_trained = n_hmodel_trained)
+    pmodel = LearningModel(_for = 'Playing', _type = 'DNN', warm_up = should_warm_up, n_trained = n_pmodel_trained)
+    hmodel = LearningModel(_for = 'Hokming', _type = 'DNN', warm_up = should_warm_up, n_trained = n_hmodel_trained)
     
     # Set the table
     table = HokmTable(p0, p1, p2, p3)
-    table.settings(reward = 100, loss = 0, regular_r = 0, regular_l = 0, eps = eps)
+    table.settings(reward = 10, loss = -10, regular_r = 5, regular_l = -5, eps = eps)
     table.set_models(pmodel, hmodel)
     
     # For learning from memory
@@ -141,7 +141,7 @@ def learn_now(should_warm_up = True):
             start = time.time()
             team0_rewards, team1_rewards = [], []
             dast0, dast1 = 0, 0
-            lr = lr * lr_decay # Decaying lerning rate
+            lr = max(lr * lr_decay, 1e-4) # Decaying lerning rate
         
             # Let's save the model for next warm up
             n_pmodel_trained = pmodel.save()

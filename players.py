@@ -191,8 +191,7 @@ class Oracle:
                 hokm = c_type
                 max_v = tmp_dict[c_type][0] * tmp_dict[c_type][1]
         return hokm
-        
-                
+         
     def play_card(self, table, t0, t1):
         # Your info: hand, knowledge and table
         # Return selected_card

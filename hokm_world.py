@@ -3,8 +3,6 @@ from my_utils import *
 from players import Player
 
 
-
-
 # Let's create a logger
 # logger = Logger(logger_name = 'Logger', address = 'Report.log', mode='w')
 # logger.info('Hello world!')
