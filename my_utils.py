@@ -4,30 +4,38 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from pprint import pprint
 
-# Game Variables
-UNKNOWN, IN_HAND = 'unk', 'inh' 
-# PLAYED_BY_0, PLAYED_BY_1, PLAYED_BY_2, PLAYED_BY_3  = 'by0', 'by1', 'by2', 'by3'
-# TABLE_BY_1, TABLE_BY_2, TABLE_BY_3 = 'tb1', 'tb2', 'tb3'
-# ALL_STATES = [PLAYED_BY_0, PLAYED_BY_1, PLAYED_BY_2, PLAYED_BY_3, TABLE_BY_1, TABLE_BY_2, TABLE_BY_3, IN_HAND]
-
-# Smaller dimensions
-PLAYED_BY_0, PLAYED_BY_1, PLAYED_BY_2, PLAYED_BY_3  = 'used', 'used', 'used', 'used'
-TABLE_BY_1, TABLE_BY_2, TABLE_BY_3 = 'tb1', 'tb2', 'tb3'
-ALL_STATES = [PLAYED_BY_0, TABLE_BY_1, TABLE_BY_2, TABLE_BY_3, IN_HAND]
-
-# General Variables
-HOKM = 'hokm'
-STATE, ACTION, REWARD = 'S', 'A', 'R'
-CARD_TYPES = ['C', 'S', 'H', 'D'] # Khaj: Club, Pik: Spades, Del: Hearts, Khesht: Diamonds
-
 # Game settings
 N_CARDS = 52
 N_FOR_HOKM = 5
 SCORE_TO_WIN = int(N_CARDS/8)+1
 
+# General Variables
+HOKM = 'hokm'
+STATE, ACTION, REWARD = 'S', 'A', 'R'
+CARD_TYPES = ['C', 'S', 'H', 'D'] # Khaj: Club, Pik: Spades, Del: Hearts, Khesht: Diamonds
+UNKNOWN, IN_HAND = 'unk', 'inh' 
+
+# Game Variables
+PLAYED_BY_0, PLAYED_BY_1, PLAYED_BY_2, PLAYED_BY_3  = 'by0', 'by1', 'by2', 'by3'
+TABLE_BY_1, TABLE_BY_2, TABLE_BY_3 = 'tb1', 'tb2', 'tb3'
+ALL_STATES = [PLAYED_BY_0, PLAYED_BY_1, PLAYED_BY_2, PLAYED_BY_3, TABLE_BY_1, TABLE_BY_2, TABLE_BY_3, IN_HAND]
+
+# Smaller dimensions
+# PLAYED_BY_0, PLAYED_BY_1, PLAYED_BY_2, PLAYED_BY_3  = 'used', 'used', 'used', 'used'
+# TABLE_BY_1, TABLE_BY_2, TABLE_BY_3 = 'tb1', 'tb2', 'tb3'
+# ALL_STATES = [PLAYED_BY_0, TABLE_BY_1, TABLE_BY_2, TABLE_BY_3, IN_HAND]
+
 
 # Creating the deck
 META_STATES = {'hokm':None}
+ALL_CARDS = []
+for c_type in CARD_TYPES:
+    for i in range(int(N_CARDS/4)):
+        ALL_CARDS.append(c_type + str(i+2))
+        META_STATES[c_type + str(i+2)] = UNKNOWN
+        
+# Creating the deck
+META_STATES = {'hokm':None, 'self_score':0, 'other_score':0}
 ALL_CARDS = []
 for c_type in CARD_TYPES:
     for i in range(int(N_CARDS/4)):
@@ -76,11 +84,20 @@ class Bucket:
     def dump(self):
         df = pd.DataFrame(self.x_bucket)
         df['y'] = self.y_bucket
+        
+        states_reference = []
+        for card in ALL_CARDS:
+            for state in ALL_STATES:
+                states_reference.append((card, state))
+        
+#         df.columns = CARD_TYPES + states_reference + ALL_CARDS + ['R']
+        
         df.to_csv('Bucket.csv')
     
     def throw_away(self):
-        self.x_bucket = []
-        self.y_bucket = []
+        if len(self.y_bucket) > 1000000:
+            self.x_bucket = []
+            self.y_bucket = []
     
     def sample(self, sample_size = 32):
         choices = np.random.choice(len(self.x_bucket), sample_size, replace = False)
@@ -94,8 +111,10 @@ class Logger(object):
     instance = None
 
     def __init__(self, logger_name = 'Logger', address = '',
-                 level = logging.DEBUG, console_level = logging.ERROR,
-                 file_level = logging.DEBUG, mode = 'w'):
+                 level = logging.WARNING,
+                 console_level = logging.ERROR,
+                 file_level = logging.DEBUG,
+                 mode = 'w'):
         super(Logger, self).__init__()
         if not Logger.instance:
             logging.basicConfig()

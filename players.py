@@ -17,8 +17,11 @@ class Player:
         self.pmodel = pmodel
         self.hmodel = hmodel
     
-    def add_score(self):
-        self.score += 1
+    def add_score(self, winner = True):
+        if winner:
+            self.score += 1
+        self.knowledge['self_score'] = self.score/(int(N_CARDS/8)+1)
+        self.knowledge['other_score'] = (int(N_CARDS/4) - len(self.hand) - self.score)/(int(N_CARDS/8)+1)
     
     def update_knowledge(self, new_set, new_states):
         for card, state in zip(new_set, new_states):
@@ -29,7 +32,8 @@ class Player:
         for round in self.memory.keys():
             mem += f'Round {round}\n'
             state = self.memory[round][STATE]
-            mem += f'State:     Hokm:{state[HOKM]}\n'
+#             mem += f'State:     Hokm:{state[HOKM]}\n'
+            mem += f"State:     Hokm:{state[HOKM]}, self score:{state['self_score']}, other score:{state['other_score']}\n"
             for card_type in CARD_TYPES:
                 for key, val in state.items():
                     if card_type in key:
@@ -104,14 +108,11 @@ class Player:
         else:
             selected_card = np.random.choice(possible_a) # this is only random playing
         
-#         print (self.knowledge[HOKM], 'Table:',table, self.hand, selected_card)
-#         print (possible_a, [self.pmodel.predict(self.p_ft.transform(self.knowledge, c)) for c in possible_a])
-#         input()
         self.hand.remove(selected_card) # remove selected card from hand
         return selected_card
     
 
-class Oracle:
+class Expert:
     def __init__(self, name, eps = 0.5, p_ft = None, h_ft=None):
         self.name = name
         self.hand = []

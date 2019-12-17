@@ -65,7 +65,7 @@ class LearningModel:
             self.load_model()
         else:
             if _for == 'Playing':
-                D = (1+len(ALL_STATES))*(N_CARDS) + len(CARD_TYPES)
+                D = 2 + (1+len(ALL_STATES))*(N_CARDS) + len(CARD_TYPES)
                 if _type == 'DNN':
                     self.model = model_for_playing(D)
                 elif _type == 'SGD':

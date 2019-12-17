@@ -4,8 +4,8 @@ from players import Player
 
 
 # Let's create a logger
-# logger = Logger(logger_name = 'Logger', address = 'Report.log', mode='w')
-# logger.info('Hello world!')
+logger = Logger(logger_name = 'Logger', address = 'Report.log', mode='w')
+logger.info('Hello world!')
 
 def card_states_on_table(table):
     all_states = [TABLE_BY_1, TABLE_BY_2, TABLE_BY_3]
@@ -133,22 +133,22 @@ class HokmTable:
         
         initial_hand = self._select_cards(N_FOR_HOKM)
         self.players[self.hakem].add_cards_to_hand(initial_hand)
-#         logger.info(f'Hakem is global player {self.hakem}. {initial_hand} are chosen to choose hokm')
+        logger.info(f'Hakem is global player {self.hakem}. {initial_hand} are chosen to choose hokm')
         
         # Select hokm out of the five variable
         self.hokm = self.players[self.hakem].select_hokm(t0, t1)
         self._update_knowledge_all([HOKM], [self.hokm])
-#         logger.info(f'           {self.hokm} is chosen as hokm')
+        logger.info(f'           {self.hokm} is chosen as hokm')
         
         # Now shuffle other cards to players
         next_player = (self.hakem + 1) % 4
         while len(self.unallocated_cards) > 0:
             if len(self.players[next_player].hand) == 0:
-                tmp_cards = self._select_cards(5)
+                tmp_cards = self._select_cards(N_FOR_HOKM)
             else:
-                tmp_cards = self._select_cards(4)
+                tmp_cards = self._select_cards(int((N_CARDS-4*N_FOR_HOKM)/8))
             self.players[next_player].add_cards_to_hand(tmp_cards)
-#             logger.info(f'{tmp_cards} are added to player {next_player} hand')
+            logger.info(f'{tmp_cards} are added to player {next_player} hand')
             next_player = (next_player + 1) % 4
             
         return initial_hand, self.hokm
@@ -161,22 +161,22 @@ class HokmTable:
         table = []
         played_cards = {} # key: player, value: card
 
-#         logger.info(f'Episode:{self.episode}. It is {self.turn} turn to start the round {n_round}') 
+        logger.info(f'Episode:{self.episode}. It is {self.turn} turn to start the round {n_round}') 
         for i in range (4):
             turn = (self.turn + i) % 4
             
-#             logger.info(f'Table: {table}')
-#             logger.info(self.players[turn].get_hand())
+            logger.info(f'Table: {table}')
+            logger.info(self.players[turn].get_hand())
             if i > 0 :
                 self.players[turn].update_knowledge(table, card_states_on_table(table)) # update the player's knowledge based on the cards on the table
             
             round_s_a_r[turn][STATE] = self.players[turn].knowledge.copy()  # getting the state of the player before playing the game
-#             logger.info(f'\nPlayer {turn} knowledge:\n' + self.players[turn].get_knowledge()) # logging the player knowledge before playing the game
+            logger.info(f'\nPlayer {turn} knowledge:\n' + self.players[turn].get_knowledge()) # logging the player knowledge before playing the game
             
             action = self.players[turn].play_card(table, t0, t1)
             round_s_a_r[turn][ACTION] = action # getting the action of the player
-#             logger.info(f'Player {turn} action is: ' + action) # logging the action
-#             logger.info(f'------------------------------------------------')
+            logger.info(f'Player {turn} action is: ' + action) # logging the action
+            logger.info(f'------------------------------------------------')
             
             table.append(action) # updating the table
             played_cards[action] = (i, turn) # key: card, value( i = the i th played card, turn = by global player number) 
@@ -185,15 +185,14 @@ class HokmTable:
         self._update_played_card_knowledge(played_cards)
         round_winner, reward = self._analyze_round(played_cards)
         for i in range(4):
-            if reward[i][1] == True:
-                self.players[i].add_score()
+            self.players[i].add_score(reward[i][1])  #reward[i][1] this is True of False, whether he has won or not 
             round_s_a_r[i][REWARD] = reward[i][0]
         
         self._update_players_memory(round_s_a_r, n_round)
         self.turn = round_winner
         
-#         logger.info(f'The winner is global player {round_winner}. The played cards were {played_cards}')
-#         logger.info(f'\nPlayers knowledge at round {n_round}, episode {self.episode}:\n' + game_status(self.players, table))
+        logger.info(f'The winner is global player {round_winner}. The played cards were {played_cards}')
+        logger.info(f'\nPlayers knowledge at round {n_round}, episode {self.episode}:\n' + game_status(self.players, table))
     
     def game_over(self):
         '''

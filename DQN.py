@@ -21,10 +21,9 @@ def play_one_episode(table=None, p_ft=None, h_ft=None, gamma=None, t0=1, t1=1, e
                              t1 = t1,
                              n_round = n_round)
     
-    # let's log the players memory
-#     for i in range(4):
-#         logger.info(f"\n----- Player{i} -----" + table.players[i].get_memory())
-    
+#     let's log the players memory
+    for i in range(4):
+        logger.info(f"\n----- Player{i} -----" + table.players[i].get_memory())
     # lets find out the sa and returns
     x_y_dict = {}
     idx = 0
@@ -54,8 +53,8 @@ def play_one_episode(table=None, p_ft=None, h_ft=None, gamma=None, t0=1, t1=1, e
     h_s_a = h_ft.transform(initial_hand, hokm)
     h_r = 1 if hakem == winner else 0
     
-#     logger.info(f'Winner is team: {winner}. Team 0 reward is {p0_sum}. Team 1 reward is {p1_sum}')
-#     logger.info(f"##################### Episode {episode} is done\n\n")
+    logger.info(f'Winner is team: {winner}. Team 0 reward is {p0_sum}. Team 1 reward is {p1_sum}')
+    logger.info(f"##################### Episode {episode} is done\n\n")
     return np.array(x_p_sa), np.array(y_p_r), np.atleast_1d(h_s_a), np.atleast_1d(h_r), p0_sum, p1_sum, winner
 
 def learn_now(should_warm_up = True):
@@ -80,11 +79,11 @@ def learn_now(should_warm_up = True):
         
     # Hyperparameters
     GAMMA = 0.95
-    N = 1000000
+    N = 3000000
     eps_decay0 = 0.01
     eps_decay1 = 0
     lr_decay = 0.99
-    batch_size = 16
+    batch_size = 32
     eps = 0.5
     epochs = 20
     previous_winner = 0
@@ -105,7 +104,7 @@ def learn_now(should_warm_up = True):
     
     # Set the table
     table = HokmTable(p0, p1, p2, p3)
-    table.settings(reward = 10, loss = -10, regular_r = 5, regular_l = -5, eps = eps)
+    table.settings(reward = 10, loss = 0, regular_r = 1, regular_l = 0, eps = eps)
     table.set_models(pmodel, hmodel)
     
     # For learning from memory
@@ -119,6 +118,7 @@ def learn_now(should_warm_up = True):
     
     start = time.time()
     while it < N:
+        
         it += 1
         if it % 100:
             # Updating t and 
@@ -167,6 +167,7 @@ def learn_now(should_warm_up = True):
         # Learning after episode
         pmodel.partial_fit(x_p_sa, y_p_r, lr)
         hmodel.partial_fit(h_s_a, h_r, lr)
+        
         # Filling the buckets
         p_bucket.fill(x_p_sa, y_p_r)
         h_bucket.fill(np.atleast_2d(h_s_a), np.atleast_1d(h_r))
@@ -195,4 +196,4 @@ def learn_now(should_warm_up = True):
     
 if __name__ == "__main__":
     # Run me
-    learn_now(should_warm_up=False)
+    learn_now(should_warm_up=True)
