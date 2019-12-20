@@ -1,70 +1,52 @@
 import logging, sys, os, time
+from feature_constructor import *
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from pprint import pprint
 
-# Game settings
-N_CARDS = 52
-N_FOR_HOKM = 5
-SCORE_TO_WIN = int(N_CARDS/8)+1
 
-# General Variables
-HOKM = 'hokm'
-STATE, ACTION, REWARD = 'S', 'A', 'R'
-CARD_TYPES = ['C', 'S', 'H', 'D'] # Khaj: Club, Pik: Spades, Del: Hearts, Khesht: Diamonds
-UNKNOWN, IN_HAND = 'unk', 'inh' 
-
-# Game Variables
-PLAYED_BY_0, PLAYED_BY_1, PLAYED_BY_2, PLAYED_BY_3  = 'by0', 'by1', 'by2', 'by3'
-TABLE_BY_1, TABLE_BY_2, TABLE_BY_3 = 'tb1', 'tb2', 'tb3'
-ALL_STATES = [PLAYED_BY_0, PLAYED_BY_1, PLAYED_BY_2, PLAYED_BY_3, TABLE_BY_1, TABLE_BY_2, TABLE_BY_3, IN_HAND]
-
-# Smaller dimensions
-# PLAYED_BY_0, PLAYED_BY_1, PLAYED_BY_2, PLAYED_BY_3  = 'used', 'used', 'used', 'used'
-# TABLE_BY_1, TABLE_BY_2, TABLE_BY_3 = 'tb1', 'tb2', 'tb3'
-# ALL_STATES = [PLAYED_BY_0, TABLE_BY_1, TABLE_BY_2, TABLE_BY_3, IN_HAND]
-
-
-# Creating the deck
-META_STATES = {'hokm':None}
-ALL_CARDS = []
-for c_type in CARD_TYPES:
-    for i in range(int(N_CARDS/4)):
-        ALL_CARDS.append(c_type + str(i+2))
-        META_STATES[c_type + str(i+2)] = UNKNOWN
-        
-# Creating the deck
-META_STATES = {'hokm':None, 'self_score':0, 'other_score':0}
-ALL_CARDS = []
-for c_type in CARD_TYPES:
-    for i in range(int(N_CARDS/4)):
-        ALL_CARDS.append(c_type + str(i+2))
-        META_STATES[c_type + str(i+2)] = UNKNOWN
-
-
-def card_type(card): 
+def type_of(card): 
     # for finding type of a card
     return list(card)[0]
-
 
 def value_of(card):
     return int(card[1:])
 
 def possible_actions(hand, table, hokm):
     # finding possible actions
+    # returns two things: first the possible actions, second if we finished the card on the ground or not
     if len(table) == 0:
-        return hand
+        return hand, False
     else:
         # find the ground card
-        ground_card = card_type(table[0])
+        ground_card = type_of(table[0])
         
         # See whether we have the card or not    
-        possible_cards = [card for card in hand if card_type(card) == ground_card]
+        possible_cards = [card for card in hand if type_of(card) == ground_card]
         if len(possible_cards) == 0:
-            return hand
+            return hand, True
         else:
-            return possible_cards
+            return possible_cards, False
+        
+def card_states_on_table(table):
+    ''' states on table example
+    ['C2', 'C6', 'C10'], new_states = [tb1, tb2, tb3]
+    ['C6', 'C10'], new_states = [tb2, tb3]
+    ['C10'], new_states = [tb3]
+    '''
+    return [TABLE_BY_1, TABLE_BY_2, TABLE_BY_3][-len(table):] if len(table) > 0 else []
+
+def game_status(players, table = []):
+    # for printing information
+    message = "#####################################################################################\n"
+    message += f'Current table {table}\n\n'
+    for i, p in enumerate(players):
+        message += f"Player {i} - current score: {p.mind.my_score}\n"
+        message += p.get_hand() + "\n"
+        message += str(p.get_knowledge()) + "\n"
+    message += "#####################################################################################\n"
+    return message
 
 
 class Bucket:

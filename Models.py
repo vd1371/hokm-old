@@ -1,5 +1,5 @@
-from keras.models import Sequential, load_model
-from keras.layers import Dense, Dropout
+# from keras.models import Sequential, load_model
+# from keras.layers import Dense, Dropout
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import SGDRegressor
@@ -61,11 +61,11 @@ class LearningModel:
         self._n_trained = n_trained
         self._for = _for
         self._type = _type
+        D = DIMENSION
         if warm_up:
             self.load_model()
         else:
             if _for == 'Playing':
-                D = 2 + (1+len(ALL_STATES))*(N_CARDS) + len(CARD_TYPES)
                 if _type == 'DNN':
                     self.model = model_for_playing(D)
                 elif _type == 'SGD':
