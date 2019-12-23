@@ -84,6 +84,7 @@ class Player:
             if tmp_dict[c_type][0] * tmp_dict[c_type][1] > max_v:
                 hokm = c_type
                 max_v = tmp_dict[c_type][0] * tmp_dict[c_type][1]
+        
         if self.fast_learner:
             return hokm
         else:

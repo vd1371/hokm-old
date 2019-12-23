@@ -18,10 +18,10 @@ def model_for_playing(D):
 #     model.add(Dense(256, activation="relu"))
 #     model.add(Dropout(0.6))
 
-    model.add(Dense(256, activation="relu"))
+    model.add(Dense(400, activation="relu"))
 #     model.add(Dropout(0.6))
 # 
-#     model.add(Dense(128, activation="relu"))
+    model.add(Dense(300, activation="relu"))
 #     model.add(Dropout(0.6))
 # 
 #     model.add(Dense(64, activation="relu"))

@@ -7,6 +7,7 @@ import numpy as np
 from hokm_world import *
 from Transformers import PlayingFeatureTransformer, HokmingFeatureTransformer
 from models import LearningModel
+from winsound import Beep
 
 
 def play_one_episode(table=None, p_ft=None, h_ft=None, gamma=None, t0=1, t1=1, episode=0, hakem=0):
@@ -80,7 +81,7 @@ def learn_now(should_warm_up = True):
     # Hyperparameters
     GAMMA = 0.95
     N = 3000000
-    eps_decay0 = 0.01
+    eps_decay0 = 0.0001
     eps_decay1 = 0
     lr_decay = 0.99
     batch_size = 32
@@ -125,24 +126,13 @@ def learn_now(should_warm_up = True):
             t0 += eps_decay0
             t1 += eps_decay1
         
-        if it % 100 == 0:  
-            # Memory replay
-            for _ in range(epochs):
-                # Playing model
-                x_p_sa, y_p_r = p_bucket.sample(batch_size)
-                pmodel.partial_fit(x_p_sa, y_p_r, lr)
-                # Hokming model
-                h_s_a, h_r = h_bucket.sample(batch_size)
-                hmodel.partial_fit(h_s_a, h_r, lr)
-            
         # Saving and printing the performance
         if it % 1000 == 0:
-            print (f'it {it}. T0 (Learners): Avg score {np.mean(team0_rewards[-1000:]):.2f} - Dasts so far {dast0}. Avg score T1 (Randoms): {np.mean(team1_rewards[-1000:]):.2f} - Dasts so far {dast1}. Time: {time.time()-start:.2f} ')
-            start = time.time()
-            team0_rewards, team1_rewards = [], []
-            dast0, dast1 = 0, 0
-            lr = max(lr * lr_decay, 1e-4) # Decaying lerning rate
-        
+            print (f'it {it}. T0 (Learners): Avg score {np.mean(team0_rewards[-1000:]):.2f} - Dasts {dast0}. Avg score T1 (Randoms): {np.mean(team1_rewards[-1000:]):.2f} - Dasts {dast1}. Time: {time.time()-start:.2f} ')
+            if dast0 > 110 and dast1 == 0:
+                Beep(500, 500)
+                break
+            
             # Let's save the model for next warm up
             n_pmodel_trained = pmodel.save()
             n_hmodel_trained = hmodel.save()
@@ -152,6 +142,24 @@ def learn_now(should_warm_up = True):
             
             p_bucket.throw_away()
             h_bucket.throw_away()
+            
+            start = time.time()
+            team0_rewards, team1_rewards = [], []
+            dast0, dast1 = 0, 0
+            lr = max(lr * lr_decay, 1e-4) # Decaying lerning rate
+            
+               
+            
+            
+        if it % 100 == 0:  
+            # Memory replay
+            for _ in range(epochs):
+                # Playing model
+                x_p_sa, y_p_r = p_bucket.sample(batch_size)
+                pmodel.partial_fit(x_p_sa, y_p_r, lr)
+                # Hokming model
+#                 h_s_a, h_r = h_bucket.sample(batch_size)
+#                 hmodel.partial_fit(h_s_a, h_r, lr)
             
             
         # Play an episode
