@@ -14,21 +14,21 @@ OPTIMIZER = 'adam'
 def model_for_playing(D):
     
     model = Sequential()
-    model.add(Dense(D, input_dim = D, activation="sigmoid", kernel_regularizer=l2(0)))
-    model.add(Dropout(0.6))
+    model.add(Dense(D, input_dim = D, activation="sigmoid", kernel_regularizer=l2(1e-5)))
+#     model.add(Dropout(0.6))
 
 #     model.add(Dense(256, activation="relu"))
 #     model.add(Dropout(0.6))
 
-    model.add(Dense(200, activation="relu", kernel_regularizer=l2(0)))
-    model.add(Dropout(0.6))
+    model.add(Dense(200, activation="relu", kernel_regularizer=l2(1e-5)))
+#     model.add(Dropout(0.6))
 # 
-    model.add(Dense(100, activation="relu", kernel_regularizer=l2(0)))
-    model.add(Dropout(0.6))
+    model.add(Dense(100, activation="relu", kernel_regularizer=l2(1e-5)))
+#     model.add(Dropout(0.6))
 # 
-    model.add(Dense(64, activation="relu"))
-    model.add(Dropout(0.6))
-    model.add(Dense(1, activation="linear", kernel_regularizer=l2(0)))
+#     model.add(Dense(64, activation="relu"))
+#     model.add(Dropout(0.6))
+    model.add(Dense(1, activation="linear", kernel_regularizer=l2(1e-5)))
 
     model.compile(
         loss=LOSS_FUNC,

@@ -29,7 +29,7 @@ def play_one_episode(table=None, p_ft=None, h_ft=None, gamma=None, t0=1, t1=1, e
     x_y_dict = {}
     idx = 0
     for i, p in enumerate(table.players):
-        if p.fast_learner or True:
+        if p.fast_learner:
             G = 0
             for round in reversed(range(1, n_round+1)):
                 knowledge = p.memory[round][STATE]
@@ -105,7 +105,7 @@ def learn_now(should_warm_up = True):
     
     # Set the table
     table = HokmTable(p0, p1, p2, p3)
-    table.settings(reward = 10, loss = 0, regular_r = 1, regular_l = 0, eps = eps)
+    table.settings(reward = 10, loss = -10, regular_r = 0, regular_l = 0, eps = eps)
     
     # For learning from memory
     p_bucket = Bucket("Playing")
