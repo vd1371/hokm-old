@@ -26,7 +26,7 @@ for c_type in CARD_TYPES:
             ALL_CARDS += (c_type + str(i+2),)
 
 #####Info: scroes    hokm states    finished cards states           other cards_state             
-DIMENSION =  2 + len(CARD_TYPES) + N_PLAYERS*len(CARD_TYPES) + (1+len(ALL_STATES))*(N_CARDS)
+DIMENSION =  2 + len(CARD_TYPES) + N_PLAYERS*len(CARD_TYPES)-4 + (1+len(ALL_STATES))*(N_CARDS)
 
 class playerMind:
     def __init__(self):
@@ -39,7 +39,7 @@ class playerMind:
                 self.cards_state[c_type + str(i+2)] = UNKNOWN
         # finished_cards_state is the state of finished card in each players hand
         self.finished_cards = {}
-        for i in range(N_PLAYERS):
+        for i in range(1, N_PLAYERS):
             for c_type in CARD_TYPES:
                 self.finished_cards[c_type + "_of_" + str(i)] = 0
             

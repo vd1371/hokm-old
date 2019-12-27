@@ -60,8 +60,8 @@ class Bucket:
             self.x_bucket.append(x_element)
             self.y_bucket.append(y_element)
     
-    def is_full(self):
-        return len(self.y_bucket) > 100000 # Arbitrary, it was for debugging
+    def is_ready(self):
+        return len(self.y_bucket) > 5000 # Arbitrary, it was for debugging
     
     def dump(self):
         df = pd.DataFrame(self.x_bucket)

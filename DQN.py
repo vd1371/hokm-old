@@ -29,7 +29,7 @@ def play_one_episode(table=None, p_ft=None, h_ft=None, gamma=None, t0=1, t1=1, e
     x_y_dict = {}
     idx = 0
     for i, p in enumerate(table.players):
-        if p.fast_learner:
+        if p.fast_learner or True:
             G = 0
             for round in reversed(range(1, n_round+1)):
                 knowledge = p.memory[round][STATE]
@@ -81,11 +81,7 @@ def learn_now(should_warm_up = True):
     # Hyperparameters
     GAMMA = 0.95
     N = 3000000
-<<<<<<< HEAD
     eps_decay0 = 0.0001
-=======
-    eps_decay0 = 0.001
->>>>>>> 2225c71d243073d45d85050aa1f0dc68f27ded5d
     eps_decay1 = 0
     lr_decay = 0.99
     batch_size = 32
@@ -98,8 +94,8 @@ def learn_now(should_warm_up = True):
     h_ft = HokmingFeatureTransformer()
     
     # Models
-    pmodel = LearningModel(_for = 'Playing', _type = 'SGD', warm_up = should_warm_up, n_trained = n_pmodel_trained)
-    hmodel = LearningModel(_for = 'Hokming', _type = 'SGD', warm_up = should_warm_up, n_trained = n_hmodel_trained)
+    pmodel = LearningModel(_for = 'Playing', _type = 'DNN', warm_up = should_warm_up, n_trained = n_pmodel_trained)
+    hmodel = LearningModel(_for = 'Hokming', _type = 'DNN', warm_up = should_warm_up, n_trained = n_hmodel_trained)
     
     # initiating players
     p0 = Player('Ali', fast_learner = True, eps = eps, p_ft = p_ft, h_ft = h_ft, pmodel = pmodel, hmodel = hmodel)
@@ -122,19 +118,25 @@ def learn_now(should_warm_up = True):
     
     start = time.time()
     while it < N:
-        
+        # Updating t
         it += 1
-        if it % 100:
-            # Updating t and 
+        if it % 1000:
             t0 += eps_decay0
             t1 += eps_decay1
+        
+        # Memory replay
+        if it % 100 == 0:
+            for _ in range(epochs):
+                # Playing model
+                x_p_sa, y_p_r = p_bucket.sample(batch_size)
+                pmodel.partial_fit(x_p_sa, y_p_r, lr)
+                # Hokming model
+#                 h_s_a, h_r = h_bucket.sample(batch_size)
+#                 hmodel.partial_fit(h_s_a, h_r, lr)
         
         # Saving and printing the performance
         if it % 1000 == 0:
             print (f'it {it}. T0 (Learners): Avg score {np.mean(team0_rewards[-1000:]):.2f} - Dasts {dast0}. Avg score T1 (Randoms): {np.mean(team1_rewards[-1000:]):.2f} - Dasts {dast1}. Time: {time.time()-start:.2f} ')
-            if dast0 > 110 and dast1 == 0:
-                Beep(500, 500)
-                break
             
             # Let's save the model for next warm up
             n_pmodel_trained = pmodel.save()
@@ -150,20 +152,6 @@ def learn_now(should_warm_up = True):
             team0_rewards, team1_rewards = [], []
             dast0, dast1 = 0, 0
             lr = max(lr * lr_decay, 1e-4) # Decaying lerning rate
-            
-               
-            
-            
-        if it % 100 == 0:  
-            # Memory replay
-            for _ in range(epochs):
-                # Playing model
-                x_p_sa, y_p_r = p_bucket.sample(batch_size)
-                pmodel.partial_fit(x_p_sa, y_p_r, lr)
-                # Hokming model
-#                 h_s_a, h_r = h_bucket.sample(batch_size)
-#                 hmodel.partial_fit(h_s_a, h_r, lr)
-            
             
         # Play an episode
         x_p_sa, y_p_r, h_s_a, h_r, p0_reward, p1_reward, winner = play_one_episode(table = table,

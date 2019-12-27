@@ -96,7 +96,8 @@ class HokmTable:
         '''
         for i, p in enumerate(self.players):
             local_number = (player_number - i) % N_PLAYERS
-            p.mind.update_finished_cards_state(local_number, card_type)
+            if not local_number == 0:
+                p.mind.update_finished_cards_state(local_number, card_type)
     
     def reset(self, episode, previous_winner):
         for p in self.players:
@@ -158,6 +159,7 @@ class HokmTable:
             action, is_finished = self.players[turn].play_card(table, t0, t1)
             if is_finished: # when a player runs out of a card
                 self._update_finished_card_knowledge(turn, type_of(table[0]))
+                
             round_s_a_r[turn][ACTION] = action # getting the action of the player
             logger.info(f'Player {turn} action is: ' + action) # logging the action
             logger.info(f'------------------------------------------------')

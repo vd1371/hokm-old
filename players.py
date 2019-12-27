@@ -36,6 +36,11 @@ class Player:
     def get_knowledge(self):
 #         hokm = self.mind[HOKM]
         knowledge = f'Hokm: {self.mind.hokm}\n'
+        for key, val in self.mind.to_dict().items():
+            if "_of_" in key:
+                knowledge += f'{key}:  {val}, '
+        knowledge += '\n\n' 
+    
         for card_type in CARD_TYPES:
             for key, val in self.mind.to_dict().items():
                 if card_type in key:
@@ -100,5 +105,103 @@ class Player:
         else:
             selected_card = np.random.choice(possible_a) # this is only random playing
         
+        self.hand.remove(selected_card) # remove selected card from hand
+        return selected_card, is_finished
+    
+class MasterPlayer:
+    def __init__(self, name):
+        self.name = name
+        self.hand = []
+        self.mind = playerMind()
+        self.fast_learner = False # DO not change this one
+        self.memory = {} # round: {state: state, action:, reward: r}
+    
+    def update_score(self, winner = True):
+        if winner:
+            self.mind.add_my_score()
+        self.mind.set_other_score(len(self.hand))
+    
+    def get_memory(self):
+        mem = "\n"
+        for round in self.memory.keys():
+            mem += f'Round {round}\n'
+            state = self.memory[round][STATE]
+#             mem += f'State:     Hokm:{state[HOKM]}\n'
+            mem += f"State:     Hokm:{state[HOKM]}, self score:{state[MY_SCORE]}, other score:{state[OTHER_SCORE]}\n"
+            for card_type in CARD_TYPES:
+                for key, val in state.items():
+                    if card_type in key:
+                        mem += f'{key}:{val}, '
+                mem += '\n'
+            mem += f'Action {self.memory[round][ACTION]}. Reward {self.memory[round][REWARD]}\n\n'
+        return mem                     
+    
+    def get_knowledge(self):
+#         hokm = self.mind[HOKM]
+        knowledge = f'Hokm: {self.mind.hokm}\n'
+        for key, val in self.mind.to_dict().items():
+            if "_of_" in key:
+                knowledge += f'{key}:  {val}, '
+        knowledge += '\n\n' 
+    
+        for card_type in CARD_TYPES:
+            for key, val in self.mind.to_dict().items():
+                if card_type in key:
+                    knowledge += f'{key}:{val}, '
+            knowledge += '\n'
+        return knowledge
+    
+    def get_hand(self):
+        return f'Hand length: {len(self.hand)} Hand: {self.hand}'
+    
+    def add_cards_to_hand(self, new_hand):
+        self.hand += new_hand
+        self.mind.update_cards_state(new_hand, [IN_HAND for _ in range(len(new_hand))])
+    
+    def reset(self):
+        self.hand = []
+        self.memory = {}
+        self.mind.forget()
+    
+    def remember(self, s_a_r, round):
+        self.memory[round] = s_a_r
+        
+    def select_hokm(self, t0, t1):
+        ### HAMID TODO: This is my initial plan for choosing HOKM
+        ### If you think there is a better option here, please 
+        tmp_dict = {}
+        possible_hokms = list(set([type_of(card) for card in self.hand]))
+        for ct in CARD_TYPES:
+            tmp_dict[ct] = [0, 0]
+            
+        for card in self.hand:
+            tmp_dict[type_of(card)][0] += 1
+            tmp_dict[type_of(card)][1] += value_of(card)
+        
+        max_v = 0
+        hokm = 'U'
+        for c_type in CARD_TYPES:
+            if tmp_dict[c_type][0] * tmp_dict[c_type][1] > max_v:
+                hokm = c_type
+                max_v = tmp_dict[c_type][0] * tmp_dict[c_type][1]
+        
+        if self.fast_learner:
+            return hokm
+        else:
+            return np.random.choice(possible_hokms)
+        
+                
+    def play_card(self, table, t0, t1):
+        possible_a, is_finished = possible_actions(self.hand, table, self.mind.hokm)
+        ### Start HAMID
+        ### This is where you should write your code
+        ### possible_a is the card that you can play in this round
+        ### is_finished is a boolean that indicated whether you have the cards of the ground card or not...
+        ### if True: boridan, rad kardan, if False: hamoon khal ro bazi kon
+        
+        
+        
+        
+        ### End
         self.hand.remove(selected_card) # remove selected card from hand
         return selected_card, is_finished

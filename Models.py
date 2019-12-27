@@ -1,5 +1,7 @@
-# from keras.models import Sequential, load_model
-# from keras.layers import Dense, Dropout
+from keras.models import Sequential, load_model
+from keras.layers import Dense, Dropout
+from keras.regularizers import l1, l2
+
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import SGDRegressor
@@ -12,21 +14,21 @@ OPTIMIZER = 'adam'
 def model_for_playing(D):
     
     model = Sequential()
-    model.add(Dense(512, input_dim = D, activation="sigmoid"))
-#     model.add(Dropout(0.6))
+    model.add(Dense(D, input_dim = D, activation="sigmoid", kernel_regularizer=l2(0)))
+    model.add(Dropout(0.6))
 
 #     model.add(Dense(256, activation="relu"))
 #     model.add(Dropout(0.6))
 
-    model.add(Dense(400, activation="relu"))
-#     model.add(Dropout(0.6))
+    model.add(Dense(200, activation="relu", kernel_regularizer=l2(0)))
+    model.add(Dropout(0.6))
 # 
-    model.add(Dense(300, activation="relu"))
-#     model.add(Dropout(0.6))
+    model.add(Dense(100, activation="relu", kernel_regularizer=l2(0)))
+    model.add(Dropout(0.6))
 # 
-#     model.add(Dense(64, activation="relu"))
-#     model.add(Dropout(0.6))
-    model.add(Dense(1, activation="linear"))
+    model.add(Dense(64, activation="relu"))
+    model.add(Dropout(0.6))
+    model.add(Dense(1, activation="linear", kernel_regularizer=l2(0)))
 
     model.compile(
         loss=LOSS_FUNC,
