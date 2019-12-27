@@ -10,7 +10,7 @@ from models import LearningModel
 from winsound import Beep
 
 
-def play_one_episode(table=None, p_ft=None, h_ft=None, gamma=None, t0=1, t1=1, episode=0, hakem=0):
+def play_one_episode(table=None, p_ft=None, h_ft=None, gamma=None, t0=1, t1=1, episode=0, hakem=0, pmodel = None):
     table.reset(episode, hakem)
     initial_hand, hokm = table.initialize(t0, t1)    
     n_round = 0
@@ -30,15 +30,21 @@ def play_one_episode(table=None, p_ft=None, h_ft=None, gamma=None, t0=1, t1=1, e
     idx = 0
     for i, p in enumerate(table.players):
         if p.fast_learner:
-            G = 0
             for round in reversed(range(1, n_round+1)):
                 knowledge = p.memory[round][STATE]
                 played_card = p.memory[round][ACTION]
                 r = p.memory[round][REWARD]
                 
-                G = r + gamma * G
+                if not round == n_round:
+                    next_knowledge = p.memory[round+1][STATE]
+                    next_played_card = p.memory[round+1][ACTION]
+                    next_Q = pmodel.predict(p_ft.transform(next_knowledge, next_played_card))
+                else:
+                    next_Q = 0 
+                
+                Q = r + gamma * next_Q
                 x = p_ft.transform(knowledge, played_card)
-                x_y_dict[idx] = (x, G)
+                x_y_dict[idx] = (x, Q)
     
                 idx += 1
             
@@ -84,9 +90,9 @@ def learn_now(should_warm_up = True):
     eps_decay0 = 0.0001
     eps_decay1 = 0
     lr_decay = 0.99
-    batch_size = 32
+    batch_size = 256
     eps = 0.5
-    epochs = 20
+    epochs = 200
     previous_winner = 0
     
     # Feature transformers
@@ -94,8 +100,8 @@ def learn_now(should_warm_up = True):
     h_ft = HokmingFeatureTransformer()
     
     # Models
-    pmodel = LearningModel(_for = 'Playing', _type = 'DNN', warm_up = should_warm_up, n_trained = n_pmodel_trained)
-    hmodel = LearningModel(_for = 'Hokming', _type = 'DNN', warm_up = should_warm_up, n_trained = n_hmodel_trained)
+    pmodel = LearningModel(_for = 'Playing', _type = 'SGD', warm_up = should_warm_up, n_trained = n_pmodel_trained)
+    hmodel = LearningModel(_for = 'Hokming', _type = 'SGD', warm_up = should_warm_up, n_trained = n_hmodel_trained)
     
     # initiating players
     p0 = Player('Ali', fast_learner = True, eps = eps, p_ft = p_ft, h_ft = h_ft, pmodel = pmodel, hmodel = hmodel)
@@ -123,35 +129,6 @@ def learn_now(should_warm_up = True):
         if it % 1000:
             t0 += eps_decay0
             t1 += eps_decay1
-        
-        # Memory replay
-        if it % 100 == 0:
-            for _ in range(epochs):
-                # Playing model
-                x_p_sa, y_p_r = p_bucket.sample(batch_size)
-                pmodel.partial_fit(x_p_sa, y_p_r, lr)
-                # Hokming model
-#                 h_s_a, h_r = h_bucket.sample(batch_size)
-#                 hmodel.partial_fit(h_s_a, h_r, lr)
-        
-        # Saving and printing the performance
-        if it % 1000 == 0:
-            print (f'it {it}. T0 (Learners): Avg score {np.mean(team0_rewards[-1000:]):.2f} - Dasts {dast0}. Avg score T1 (Randoms): {np.mean(team1_rewards[-1000:]):.2f} - Dasts {dast1}. Time: {time.time()-start:.2f} ')
-            
-            # Let's save the model for next warm up
-            n_pmodel_trained = pmodel.save()
-            n_hmodel_trained = hmodel.save()
-            params = {'t0':t0, 't1':t1, 'it': it, 'n_pmodel_trained': n_pmodel_trained, 'n_hmodel_trained': n_hmodel_trained, 'lr': lr}
-            with open("WarmUpParams.txt", 'w') as f: 
-                f.write(str(params))
-            
-            p_bucket.throw_away()
-            h_bucket.throw_away()
-            
-            start = time.time()
-            team0_rewards, team1_rewards = [], []
-            dast0, dast1 = 0, 0
-            lr = max(lr * lr_decay, 1e-4) # Decaying lerning rate
             
         # Play an episode
         x_p_sa, y_p_r, h_s_a, h_r, p0_reward, p1_reward, winner = play_one_episode(table = table,
@@ -161,11 +138,10 @@ def learn_now(should_warm_up = True):
                                                                              t0 = t0,
                                                                              t1 = t1,
                                                                              episode = it,
-                                                                             hakem = previous_winner)
+                                                                             hakem = previous_winner,
+                                                                             pmodel = pmodel)
         previous_winner = winner
-        # Learning after episode
-        pmodel.partial_fit(x_p_sa, y_p_r, lr)
-        hmodel.partial_fit(h_s_a, h_r, lr)
+
         
         # Filling the buckets
         p_bucket.fill(x_p_sa, y_p_r)
@@ -185,6 +161,33 @@ def learn_now(should_warm_up = True):
         elif team1_won_episodes == 7:
             dast1 += 1
             team0_won_episodes, team1_won_episodes = 0, 0
+            
+        # Memory replay
+        if p_bucket.is_ready():
+            for _ in range(epochs):
+                # Playing model
+                x_p_sa, y_p_r = p_bucket.sample(batch_size)
+                pmodel.partial_fit(x_p_sa, y_p_r, lr)
+                # Hokming model
+#                 h_s_a, h_r = h_bucket.sample(batch_size)
+#                 hmodel.partial_fit(h_s_a, h_r, lr)
+        
+            print (f'it {it}. T0 (Learners): Avg score {np.mean(team0_rewards[-1000:]):.2f} - Dasts {dast0}. Avg score T1 (Randoms): {np.mean(team1_rewards[-1000:]):.2f} - Dasts {dast1}. Time: {time.time()-start:.2f} ')
+            
+            # Let's save the model for next warm up
+            n_pmodel_trained = pmodel.save()
+            n_hmodel_trained = hmodel.save()
+            params = {'t0':t0, 't1':t1, 'it': it, 'n_pmodel_trained': n_pmodel_trained, 'n_hmodel_trained': n_hmodel_trained, 'lr': lr}
+            with open("WarmUpParams.txt", 'w') as f: 
+                f.write(str(params))
+            
+            p_bucket.throw_away()
+            h_bucket.throw_away()
+            
+            start = time.time()
+            team0_rewards, team1_rewards = [], []
+            dast0, dast1 = 0, 0
+            lr = max(lr * lr_decay, 1e-4) # Decaying lerning rate
         
 
 #     plt.plot(team0_rewards)

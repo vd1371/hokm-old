@@ -75,11 +75,13 @@ class Bucket:
 #         df.columns = CARD_TYPES + states_reference + ALL_CARDS + ['R']
         
         df.to_csv('Bucket.csv')
+        
+    def is_ready(self):
+        return len(self.y_bucket) > 50000
     
     def throw_away(self):
-        if len(self.y_bucket) > 1000000:
-            self.x_bucket = []
-            self.y_bucket = []
+        self.x_bucket = []
+        self.y_bucket = []
     
     def sample(self, sample_size = 32):
         choices = np.random.choice(len(self.x_bucket), sample_size, replace = False)
