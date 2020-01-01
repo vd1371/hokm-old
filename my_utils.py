@@ -89,6 +89,9 @@ class Bucket:
         y_sample = np.array([self.y_bucket[y_idx] for y_idx in choices])
     
         return x_sample, y_sample
+    
+    def get(self):
+        return self.x_bucket, self.y_bucket
         
 class Logger(object):
     

@@ -12,23 +12,22 @@ LOSS_FUNC = 'MSE'
 OPTIMIZER = 'adam'
 
 def model_for_playing(D):
-    
     model = Sequential()
-    model.add(Dense(D, input_dim = D, activation="sigmoid", kernel_regularizer=l2(1e-5)))
+    model.add(Dense(D, input_dim = D, activation="tanh"))
 #     model.add(Dropout(0.6))
 
-#     model.add(Dense(256, activation="relu"))
+    model.add(Dense(300, activation="relu"))
 #     model.add(Dropout(0.6))
 
-    model.add(Dense(200, activation="relu", kernel_regularizer=l2(1e-5)))
+    model.add(Dense(200, activation="relu"))
 #     model.add(Dropout(0.6))
 # 
-    model.add(Dense(100, activation="relu", kernel_regularizer=l2(1e-5)))
+    model.add(Dense(200, activation="relu"))
 #     model.add(Dropout(0.6))
 # 
 #     model.add(Dense(64, activation="relu"))
 #     model.add(Dropout(0.6))
-    model.add(Dense(1, activation="linear", kernel_regularizer=l2(1e-5)))
+    model.add(Dense(1, activation="linear"))
 
     model.compile(
         loss=LOSS_FUNC,
@@ -85,6 +84,7 @@ class LearningModel:
                 elif _type == 'SKLearn':
                     self.model = SGDRegressor(loss='squared_loss', penalty='l2', verbose=0, learning_rate='invscaling')
                     self.model.partial_fit(np.atleast_2d([np.random.choice([0,1]) for _ in range(D)]), [0])
+            self.save() # we save the model in the beginning so the target_model could read it
     
     def partial_fit(self, X, Y, lr):
         X = np.atleast_2d(X)
