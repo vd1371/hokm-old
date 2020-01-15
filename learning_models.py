@@ -25,7 +25,7 @@ def model_for_playing(D):
     model.add(Dense(200, activation="relu"))
 #     model.add(Dropout(0.6))
 # 
-#     model.add(Dense(64, activation="relu"))
+    model.add(Dense(200, activation="relu"))
 #     model.add(Dropout(0.6))
     model.add(Dense(1, activation="linear"))
 

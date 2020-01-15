@@ -8,6 +8,7 @@ from hokm_world import *
 from feature_transformers import PlayingFeatureTransformer, HokmingFeatureTransformer
 from learning_models import LearningModel
 from winsound import Beep
+from mem_top import mem_top
 
 
 def play_one_episode(table=None, p_ft=None, h_ft=None, gamma=None, t0=1, t1=1, episode=0, hakem=0, pmodel = None):
@@ -144,7 +145,7 @@ def learn_now(should_warm_up = True):
                                                                              pmodel = pmodel_target)
         # Filling the buckets
         p_bucket.fill(x_p_sa, y_p_r)
-        h_bucket.fill(np.atleast_2d(h_s_a), np.atleast_1d(h_r))
+#         h_bucket.fill(np.atleast_2d(h_s_a), np.atleast_1d(h_r))
         
         # Learning after each episode
         pmodel.partial_fit(x_p_sa, y_p_r, lr)
@@ -167,9 +168,6 @@ def learn_now(should_warm_up = True):
         
         if it % 1000 == 0:
             print (f'it {it}. Avg score: Learners {np.mean(team0_rewards):.2f} Randoms {np.mean(team1_rewards):.2f} - Dasts {dast0/(dast0+dast1)*100:.2f}% - eps:{0.5/(t0):.2f} - Time: {time.time()-start:.2f}')
-            if dast0/(dast0+dast1) > 0.99:
-                print ("Fuck yeah, we did it")
-                break
             start = time.time()
             team0_rewards, team1_rewards = [], []
             dast0, dast1 = 0, 0
@@ -209,4 +207,4 @@ def learn_now(should_warm_up = True):
     
 if __name__ == "__main__":
     # Run me
-    learn_now(should_warm_up=False)
+    learn_now(should_warm_up=True)

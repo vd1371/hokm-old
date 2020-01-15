@@ -133,7 +133,6 @@ class HokmTable:
             self.players[next_player].add_cards_to_hand(tmp_cards)
             logger.info(f'{tmp_cards} are added to player {next_player} hand')
             next_player = (next_player + 1) % N_PLAYERS
-            
         return initial_hand, self.hokm
         
     def play_one_round(self, t0 = 1, t1 = 1, n_round = 1):
